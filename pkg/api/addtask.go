@@ -20,7 +20,7 @@ func addTaskHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	if err = json.Unmarshal(body, &task); err != nil {
-		writeJSON(res, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeJSON(res, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
 

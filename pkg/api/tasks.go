@@ -5,12 +5,14 @@ import (
 	"net/http"
 )
 
+const tasksLimit = 50
+
 type TasksResp struct {
 	Tasks []*db.Task `json:"tasks"`
 }
 
 func tasksHandler(res http.ResponseWriter, req *http.Request) {
-	tasks, err := db.Tasks(50) // в параметре максимальное количество записей
+	tasks, err := db.Tasks(tasksLimit)
 	if err != nil {
 		writeJSON(res, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return

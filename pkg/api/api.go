@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"main/pkg/db"
 	"net/http"
 	"time"
@@ -14,38 +15,44 @@ func Init() {
 }
 
 func nextDayHandler(res http.ResponseWriter, req *http.Request) {
-	var now time.Time
+	if req.Method == http.MethodGet {
+		var now time.Time
 
-	nowParam := req.FormValue("now")
+		nowParam := req.FormValue("now")
 
-	if nowParam == "" {
-		now = time.Now()
-	} else {
-		parsedNow, err := time.Parse(dateFormat, nowParam)
+		if nowParam == "" {
+			now = time.Now()
+		} else {
+			parsedNow, err := time.Parse(dateFormat, nowParam)
+			if err != nil {
+				http.Error(res, "invalid now parameter", http.StatusBadRequest)
+				return
+			}
+			now = parsedNow
+		}
+
+		date := req.FormValue("date")
+		repeat := req.FormValue("repeat")
+
+		nextDate, err := NextDate(now, date, repeat)
 		if err != nil {
-			http.Error(res, "invalid now parameter", http.StatusBadRequest)
+			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
 		}
-		now = parsedNow
+
+		res.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		res.WriteHeader(http.StatusOK)
+		if _, err := res.Write([]byte(nextDate)); err != nil {
+			log.Printf("failed to write response: %v", err)
+		}
+	} else {
+		http.Error(res, "method not allowed", http.StatusMethodNotAllowed)
 	}
 
-	date := req.FormValue("date")
-	repeat := req.FormValue("repeat")
-
-	nextDate, err := NextDate(now, date, repeat)
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	res.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	res.WriteHeader(http.StatusOK)
-	res.Write([]byte(nextDate))
 }
 
 func taskHandler(res http.ResponseWriter, req *http.Request) {
 	switch req.Method {
-	// обработка других методов будет добавлена на следующих шагах
 	case http.MethodPost:
 		addTaskHandler(res, req)
 	case http.MethodGet:
